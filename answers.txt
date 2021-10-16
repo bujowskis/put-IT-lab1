@@ -1,0 +1,6 @@
+3 Frequency of letters:
+	- characters are not equally likely.
+	- the most probable characters are:	' ', 'e', 't', 'o', 'a', 'i'
+	- the least probable characters are:	'z', 'q', 'j'
+	- the similarity is, the most frequent letters are encoded using the least amount of signals in Morse code, and the number of signals used to encode a chaacter increases with the decrease of occurrence frequency
+	- this relationship makes sense - it decreases amount of signals used to send a whole message
