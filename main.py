@@ -67,10 +67,51 @@ def run_approx(file_name):
         remove_digits(freq)
         print("\tfrequencies(no digits):\n{}\n".format(
             {key: value for key, value in sorted(freq.items(), key=lambda item: item[1], reverse=True)}))
-        total = sum(freq.values())
-        print("\tno. of characters(no digits): {}\n".format(total))
+        chars_total = sum(freq.values())
+        print("\tno. of characters(no digits): {}\n".format(chars_total))
 
         first_order(freq, file_name)
+
+        if freq['a'] > freq['b']:
+            max_first = 'a'
+            max_second = 'b'
+        else:
+            max_first = 'b'
+            max_second = 'a'
+        for key in freq.keys():
+            if freq[key] > freq[max_first]:
+                max_second = max_first
+                max_first = key
+            elif freq[key] > freq[max_second]:
+                max_second = key
+        print("\tmost frequent character: \'{}\', second most frequent: \'{}\'\n".format(max_first, max_second))
+
+        # probabilities of occurring after two most frequent characters
+        first_dict = {}
+        second_dict = {}
+        contents = contents[0]  # as all file contents are in a single line
+
+        for key in freq.keys():
+            first_format = "{}{}".format(max_first, key)
+            second_format = "{}{}".format(max_second, key)
+            first_dict[first_format] = contents.count(first_format)
+            second_dict[second_format] = contents.count(second_format)
+        # total no. of occurrences of such doubles
+        first_format_total = sum(first_dict.values())
+        second_format_total = sum(second_dict.values())
+        # convert count into probabilities
+        for key in freq.keys():
+            first_format = "{}{}".format(max_first, key)
+            second_format = "{}{}".format(max_second, key)
+            first_dict[first_format] /= first_format_total
+            second_dict[second_format] /= second_format_total
+        print("\tconditional probabilities of the following doubles:")
+        print("\tnote: due to need for the same probabilistic space, the formula is:"
+              "\tP(\"e|a\") = P(\"ea\")/P(\"e*\")\n")
+        print("{}\n".format(
+            {key: value for key, value in sorted(first_dict.items(), key=lambda item: item[1], reverse=True)}))
+        print("{}\n".format(
+            {key: value for key, value in sorted(second_dict.items(), key=lambda item: item[1], reverse=True)}))
 
 
 # MAIN PROGRAM
