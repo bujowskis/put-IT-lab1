@@ -47,7 +47,7 @@ def first_order(freq, file_name, length=500):
 
 
 # generates markov approximation of given order, based on the contents
-# todo - this could work (recursion/clever iteration)
+# NOTE- this could work (recursion/clever iteration)
 def markov(contents, freq, file_name, order=1, length=500):
     print("\t(running markov approximation of order {})\n".format(order))
     if length < 0:
@@ -58,7 +58,7 @@ def markov(contents, freq, file_name, order=1, length=500):
     count_matrix = []
     i = 0
     while i < order:
-        #count_matrix =
+        # count_matrix =
         i += 1
 
 
@@ -101,7 +101,50 @@ def markov3(contents, freq, file_name, length=500):
     if length < 0:
         print("length cannot be lower than 0")
         return
-    # todo
+
+    # count all possible doubles
+    count_matrix = [[[[0 for i in range(27)] for j in range(27)] for k in range(27)] for l in range(27)]
+    char_dict = {}
+    id_dict = {}
+    i = 0
+    for key in freq.keys():
+        char_dict[key] = i
+        id_dict[i] = key
+        i += 1
+    for key1 in freq.keys():
+        for key2 in freq.keys():
+            for key3 in freq.keys():
+                for key4 in freq.keys():
+                    cur_format = "{}{}{}{}".format(key1, key2, key3, key4)
+                    count_matrix[char_dict[key1]][char_dict[key2]][char_dict[key3]][char_dict[key4]] =\
+                        contents.count(cur_format)
+
+    with open("markov3-{}".format(file_name), 'w') as file_out:
+        # first character based on first-order approx
+        prev1 = random.choices(list(freq.keys()), list(freq.values()))[0]
+        # second character based on first order Markov approx
+        list_prev2 = [0 for i in range(27)]
+        for i in range(27):
+            for j in range(27):
+                for k in range(27):
+                    list_prev2[i] += count_matrix[char_dict[prev1]][i][j][k]
+        prev2 = id_dict[random.choices(range(27), list(list_prev2))[0]]
+        # third character based on second order Markov approx
+        list_prev3 = [0 for i in range(27)]
+        for i in range(27):
+            for j in range(27):
+                list_prev3[i] += count_matrix[char_dict[prev1]][char_dict[prev2]][i][j]
+        prev3 = id_dict[random.choices(range(27), list(list_prev3))[0]]
+
+        # all other characters based on third order Markov sequence
+        for i in range(length - 1):
+            current = id_dict[
+                random.choices(range(27), list(
+                    count_matrix[char_dict[prev1]][char_dict[prev2]][char_dict[prev3]]))[0]]  # choose next character
+            file_out.write(prev1)  # write the last previous character
+            prev1 = prev2  # shift all characters to previous
+            prev2 = prev3
+            prev3 = current
 
 
 # generates Markov approximation of fifth order
@@ -195,8 +238,8 @@ zeroth(chars)
 run_approx("norm_hamlet.txt",
            first=False,
            cond_prob=False,
-           mar1=True,
-           mar3=False,
+           mar1=False,
+           mar3=True,
            mar5=False)
 # run_approx("norm_romeo_and_juliet.txt",
 #            first=False,
