@@ -8,3 +8,8 @@
 4 First order approximation
     - the words average about 5-6 most of the time
     - some variations may occur (e.g. I managed to get 4 and 7 after few tries) but are unlikely
+
+6 Approximations based on Markov sources
+    - first order markov source - 5-8 characters on average, but this one tends to vary the most
+    - third order markov source - 4-6 characters on average
+    - fifth order markov source - 5-8 characters on average

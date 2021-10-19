@@ -96,13 +96,17 @@ def markov1(contents, freq, file_name, length=500):
 
 
 # generates Markov approximation of third order
-def markov3(contents, freq, file_name, length=500):
+def markov3(contents, freq, file_name, length=500, short=0):
     print("\t(running markov approximation of third order)\n")
     if length < 0:
         print("length cannot be lower than 0")
         return
 
-    # count all possible doubles
+    # if specified, shorten the file
+    if short > 0:
+        contents = contents[:short]
+
+    # count all possible sequences of 4 chars
     count_matrix = [[[[0 for i in range(27)] for j in range(27)] for k in range(27)] for l in range(27)]
     char_dict = {}
     id_dict = {}
@@ -148,12 +152,102 @@ def markov3(contents, freq, file_name, length=500):
 
 
 # generates Markov approximation of fifth order
-def markov5(contents, freq, file_name, length=500):
+def markov5(contents, freq, file_name, length=500, short=0, start_prob=False):
     print("\t(running markov approximation of fifth order)\n")
     if length < 0:
         print("length cannot be lower than 0")
         return
-    # todo
+
+    # if specified, shorten the file
+    if short > 0:
+        contents = contents[:short]
+
+    # count all possible sequences of 6 characters
+    count_matrix = [[[[[[0 for i in range(27)] for j in range(27)] for k in range(27)] for l in range(27)]
+                     for m in range(27)] for n in range(27)]
+    char_dict = {}
+    id_dict = {}
+    i = 0
+    for key in freq.keys():
+        char_dict[key] = i
+        id_dict[i] = key
+        i += 1
+    for key1 in freq.keys():
+        for key2 in freq.keys():
+            for key3 in freq.keys():
+                for key4 in freq.keys():
+                    for key5 in freq.keys():
+                        for key6 in freq.keys():
+                            cur_format = "{}{}{}{}{}{}".format(key1, key2, key3, key4, key5, key6)
+                            count_matrix[char_dict[key1]][char_dict[key2]][char_dict[key3]][char_dict[key4]][
+                                char_dict[key5]][char_dict[key6]] = contents.count(cur_format)
+
+    with open("markov5-{}".format(file_name), 'w') as file_out:
+        # if sequence should start with "probability ", skip the markov-based beginning
+        prev1 = ' '
+        prev2 = ' '
+        prev3 = ' '
+        prev4 = ' '
+        prev5 = ' '
+        if start_prob:
+            file_out.write("probability ")
+            prev1 = 'l'
+            prev2 = 'i'
+            prev3 = 't'
+            prev4 = 'y'
+            prev5 = ' '
+        else:
+            # first character based on first-order approx
+            prev1 = random.choices(list(freq.keys()), list(freq.values()))[0]
+            # second character based on first order Markov approx
+            list_prev2 = [0 for i in range(27)]
+            for i in range(27):
+                for j in range(27):
+                    for k in range(27):
+                        for l in range(27):
+                            for m in range(27):
+                                list_prev2[i] += count_matrix[char_dict[prev1]][i][j][k][l][m]
+            prev2 = id_dict[random.choices(range(27), list(list_prev2))[0]]
+            # third character based on second order Markov approx
+            list_prev3 = [0 for i in range(27)]
+            for i in range(27):
+                for j in range(27):
+                    for k in range(27):
+                        for l in range(27):
+                            list_prev3[i] += count_matrix[char_dict[prev1]][char_dict[prev2]][i][j][k][l]
+            prev3 = id_dict[random.choices(range(27), list(list_prev3))[0]]
+            # fourth character based on third order Markov approx
+            list_prev4 = [0 for i in range(27)]
+            for i in range(27):
+                for j in range(27):
+                    for k in range(27):
+                        list_prev4[i] += count_matrix[char_dict[prev1]][char_dict[prev2]][char_dict[prev3]][i][j][k]
+            prev4 = id_dict[random.choices(range(27), list(list_prev4))[0]]
+            # fifth character based on fourth order Markov approx
+            list_prev5 = [0 for i in range(27)]
+            for i in range(27):
+                for j in range(27):
+                    list_prev5[i] += count_matrix[char_dict[prev1]][char_dict[prev2]][char_dict[prev3]][
+                        char_dict[prev4]][i][j]
+            prev5 = id_dict[random.choices(range(27), list(list_prev5))[0]]
+
+        # all other characters based on fifth order Markov sequence
+        for i in range(length - 1):
+            list_current = list(count_matrix[char_dict[prev1]][char_dict[prev2]][char_dict[prev3]][char_dict[prev4]][
+                char_dict[prev5]])
+            if sum(list_current) == 0:
+                current = id_dict[random.choice(range(27))]
+            else:
+                current = id_dict[
+                    random.choices(range(27), list(
+                        count_matrix[char_dict[prev1]][char_dict[prev2]][char_dict[prev3]][char_dict[prev4]][
+                            char_dict[prev5]]))[0]]  # choose next character
+            file_out.write(prev1)  # write the last previous character
+            prev1 = prev2  # shift all characters to previous
+            prev2 = prev3
+            prev3 = prev4
+            prev4 = prev5
+            prev5 = current
 
 
 # Main function, carrying out all chosen approximations based on given norm sample
@@ -223,9 +317,9 @@ def run_approx(file_name, first=True, cond_prob=True, mar1=True, mar3=True, mar5
         if mar1:
             markov1(contents, freq, file_name)
         if mar3:
-            markov3(contents, freq, file_name)
+            markov3(contents, freq, file_name, short=2000)
         if mar5:
-            markov5(contents, freq, file_name)
+            markov5(contents, freq, file_name, short=1000)
 
 
 # MAIN PROGRAM
@@ -236,20 +330,20 @@ zeroth(chars)
 
 # all other approximations; adjust parameters for desired approximations
 run_approx("norm_hamlet.txt",
-           first=False,
-           cond_prob=False,
-           mar1=False,
+           first=True,
+           cond_prob=True,
+           mar1=True,
            mar3=True,
-           mar5=False)
-# run_approx("norm_romeo_and_juliet.txt",
-#            first=False,
-#            cond_prob=False,
-#            mar1=False,
-#            mar3=False,
-#            mar5=False)
-# run_approx("norm_wiki_sample.txt",
-#            first=False,
-#            cond_prob=False,
-#            mar1=False,
-#            mar3=False,
-#            mar5=False)
+           mar5=True)
+run_approx("norm_romeo_and_juliet.txt",
+           first=True,
+           cond_prob=True,
+           mar1=True,
+           mar3=True,
+           mar5=True)
+run_approx("norm_wiki_sample.txt",
+           first=True,
+           cond_prob=True,
+           mar1=True,
+           mar3=True,
+           mar5=True)
